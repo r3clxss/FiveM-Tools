@@ -19,7 +19,7 @@ const Home = () => {
     },
     {
       icon: FileSearch,
-      title: "Analyzer",
+      title: "Handling Analyzer",
       description: "Få djupgående feedback på dina handling.meta filer",
       link: "/handling",
     },
