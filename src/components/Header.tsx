@@ -15,7 +15,7 @@ export const Header = () => {
   const navLinks = [
     { path: "/", label: "Hem", icon: Settings },
     { path: "/flags", label: "Handling Flags", icon: Flag },
-    { path: "/handling", label: "Analyzer", icon: FileSearch },
+    { path: "/handling", label: "Handling Analyzer", icon: FileSearch },
     { path: "/riktlinjer", label: "Riktlinjer", icon: BookOpen },
     { path: "/vapen", label: "Weapon Flags", icon: Sword },
   ];
