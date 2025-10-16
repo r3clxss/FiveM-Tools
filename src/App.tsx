@@ -26,7 +26,7 @@ const App = () => (
             <Header />
             <main className="flex-1">
               <Routes>
-                <Route path="/hem" element={<Home />} />
+                <Route path="/" element={<Home />} />
                 <Route path="/flags" element={<HandlingFlags />} />
                 <Route path="/handling" element={<HandlingAnalyzer />} />
                 <Route path="/riktlinjer" element={<Guidelines />} />
