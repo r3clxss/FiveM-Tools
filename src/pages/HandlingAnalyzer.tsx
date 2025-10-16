@@ -1,14 +1,15 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import { Label } from "@/components/ui/label";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { FileSearch, CheckCircle, AlertTriangle, XCircle, Upload, Search, Copy } from "lucide-react";
+import { FileSearch, CheckCircle, AlertTriangle, XCircle, Upload, Search, Copy, Save, Wand2, Menu, X } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 
 interface HandlingFlag {
   value: number;
@@ -18,38 +19,38 @@ interface HandlingFlag {
 }
 
 const handlingFlags: HandlingFlag[] = [
-  { value: 1, name: "smoothed_compression", description: "Simulerar progressiv fjädring, gör fjädringens kompressionsrörelse mjukare.", recommended: true },
-  { value: 2, name: "reduced_mod_mass", description: "Minskar massa tillagd från uppgraderingar.", recommended: true },
-  { value: 4, name: "has_kers", description: "Aktiverar delvis KERS på fordonet; inaktiverar tutan och visar laddningsindikatorn under minikartan.", recommended: false },
-  { value: 8, name: "has_rally_tyres", description: "Inverterar hur grepp fungerar på fordonet. Stark motståndskraft mot glidning.", recommended: false },
-  { value: 16, name: "no_handbrake", description: "Inaktiverar handbromskontroll för fordonet.", recommended: false },
-  { value: 32, name: "steer_rearwheels", description: "Styr bakhjulen istället för framhjulen.", recommended: false },
-  { value: 64, name: "handbrake_rearwheelsteer", description: "Handbromskontrollen gör att bakhjulen styr tillsammans med framhjulen.", recommended: true },
-  { value: 128, name: "steer_all_wheels", description: "Styr alla hjul, med bakhjul som styr i samma låsvinkel som framhjulen.", recommended: true },
-  { value: 256, name: "freewheel_no_gas", description: "Inaktiverar motorbromsning när inget gas ges.", recommended: true },
-  { value: 512, name: "no_reverse", description: "Inaktiverar backväxel för fordonet.", recommended: false },
-  { value: 1024, name: "reduced_righting_force", description: "Gör fordonet långsammare att vända tillbaka på hjulen.", recommended: false },
-  { value: 2048, name: "steer_no_wheels", description: "Inaktiverar styrning på alla hjul, för användning med fordon med larvband.", recommended: false },
-  { value: 4096, name: "cvt", description: "Ger fordonet en variabel växellåda, för användning med fordon med 1 växel.", recommended: true },
-  { value: 8192, name: "alt_ext_wheel_bounds_beh", description: "För närvarande odefinierad.", recommended: true },
-  { value: 16384, name: "dont_raise_bounds_at_speed", description: "För närvarande odefinierad.", recommended: true },
-  { value: 32768, name: "ext_wheel_bounds_col", description: "För närvarande odefinierad.", recommended: true },
-  { value: 65536, name: "less_snow_sink", description: "Mindre greppförlust från djup lera eller snö, särskilt i North Yankton.", recommended: true },
-  { value: 131072, name: "tyres_can_clip", description: "Tillåter däck att klippa in i marken under tillräckligt tryck.", recommended: true },
-  { value: 262144, name: "reduced_drive_over_damage", description: "För närvarande odefinierad.", recommended: true },
-  { value: 524288, name: "alt_ext_wheel_bounds_shrink", description: "För närvarande odefinierad.", recommended: true },
-  { value: 1048576, name: "offroad_abilities", description: "Gravitationskonstant ökad med 10%, resulterar i ökat grepp och snabbare fall när fordonet är luftburet.", recommended: true },
-  { value: 2097152, name: "offroad_abilities_x2", description: "Gravitationskonstant ökad med 20%, immunitet mot buskar, ökad kraft och auto-utjämning i luften.", recommended: true },
-  { value: 4194304, name: "tyres_raise_side_impact_threshold", description: "Inkluderar däcken i fordonets allmänna kollisionshitbox.", recommended: true },
-  { value: 8388608, name: "offroad_increased_gravity_no_foliage_drag", description: "Gravitationskonstant ökad med 20%, immunitet mot buskar och ökad kraft.", recommended: true },
-  { value: 16777216, name: "enable_lean", description: "För närvarande odefinierad.", recommended: true },
-  { value: 33554432, name: "force_no_tc_or_sc", description: "Tillåter motorcyklar att tappa grepp.", recommended: true },
-  { value: 67108864, name: "heavyarmour", description: "För närvarande odefinierad.", recommended: false },
-  { value: 134217728, name: "armoured", description: "Förhindrar fordonsdörrar (inklusive motorhuv och bagagelucka) från att öppnas vid kollisioner.", recommended: false },
-  { value: 268435456, name: "self_righting_in_water", description: "För närvarande odefinierad.", recommended: true },
-  { value: 536870912, name: "improved_righting_force", description: "Ökar kraften som verkar på fordonet när det försöker vända tillbaka på hjulen.", recommended: true },
-  { value: 1073741824, name: "low_speed_wheelies", description: "Tillåter en motorcykel att göra wheelies vid mycket låga hastigheter.", recommended: true },
-  { value: 2147483648, name: "last_available_flag", description: "För närvarande odefinierad.", recommended: true },
+  { value: 1, name: "smoothed_compression", description: "Simulerar progressiv fjädring, gör fjädringens kompressions rörelse smidigare", recommended: true },
+  { value: 2, name: "reduced_mod_mass", description: "Minskar massan som läggs till från uppgraderingar", recommended: true },
+  { value: 4, name: "has_kers", description: "Delvis aktiverar KERS på fordonet; inaktiverar tutan och visar laddningsstapeln under minikartan", recommended: false },
+  { value: 8, name: "has_rally_tyres", description: "Inverterar hur greppet fungerar på fordonet. Starkt motstånd mot glidning", recommended: false },
+  { value: 16, name: "no_handbrake", description: "Inaktiverar handbromskontroll för fordonet", recommended: false },
+  { value: 32, name: "steer_rearwheels", description: "Styr bakhjulen istället för framhjulen", recommended: false },
+  { value: 64, name: "handbrake_rearwheelsteer", description: "Handbromskontrollen får bakhjulen att styra förutom framhjulen", recommended: true },
+  { value: 128, name: "steer_all_wheels", description: "Styr alla hjul, där bakhjulen styr i samma låsvinkel som framhjulen", recommended: true },
+  { value: 256, name: "freewheel_no_gas", description: "Inaktiverar motorbromsning när ingen gas tillämpas", recommended: true },
+  { value: 512, name: "no_reverse", description: "Inaktiverar backning för fordonet", recommended: false },
+  { value: 1024, name: "reduced_righting_force", description: "Gör fordonet långsammare att vända tillbaka på hjulen", recommended: false },
+  { value: 2048, name: "steer_no_wheels", description: "Inaktiverar styrning på alla hjul, för användning med fordon med band", recommended: false },
+  { value: 4096, name: "cvt", description: "Ger fordonet en variabel-ratio växellåda, för användning med fordon med 1 växel", recommended: true },
+  { value: 8192, name: "alt_ext_wheel_bounds_beh", description: "För närvarande odefinierad", recommended: true },
+  { value: 16384, name: "dont_raise_bounds_at_speed", description: "För närvarande odefinierad", recommended: true },
+  { value: 32768, name: "ext_wheel_bounds_col", description: "För närvarande odefinierad", recommended: true },
+  { value: 65536, name: "less_snow_sink", description: "Mindre greppförlust från djup lera eller snö, mest märkbart i North Yankton", recommended: true },
+  { value: 131072, name: "tyres_can_clip", description: "Tillåter däck att klippa in i marken när de är under tillräckligt tryck", recommended: true },
+  { value: 262144, name: "reduced_drive_over_damage", description: "För närvarande odefinierad", recommended: true },
+  { value: 524288, name: "alt_ext_wheel_bounds_shrink", description: "För närvarande odefinierad", recommended: true },
+  { value: 1048576, name: "offroad_abilities", description: "Gravitationskonstant ökad med 10%, resulterar i ökat grepp & faller snabbare när luftburen", recommended: true },
+  { value: 2097152, name: "offroad_abilities_x2", description: "Gravitationskonstant ökad med 20%, buskimmunitet, ökad kraft och auto-nivellerande i luften", recommended: true },
+  { value: 4194304, name: "tyres_raise_side_impact_threshold", description: "Inkluderar däcken i fordonets allmänna kollisionshitbox", recommended: true },
+  { value: 8388608, name: "offroad_increased_gravity_no_foliage_drag", description: "Gravitationskonstant ökad med 20%, buskimmunitet och ökad kraft", recommended: true },
+  { value: 16777216, name: "enable_lean", description: "För närvarande odefinierad", recommended: true },
+  { value: 33554432, name: "force_no_tc_or_sc", description: "Tillåter motorcyklar att förlora dragkraft", recommended: true },
+  { value: 67108864, name: "heavyarmour", description: "För närvarande odefinierad", recommended: false },
+  { value: 134217728, name: "armoured", description: "Förhindrar fordonsdörrar (inklusive huv och bagagelucka) från att öppnas vid kollisioner", recommended: false },
+  { value: 268435456, name: "self_righting_in_water", description: "För närvarande odefinierad", recommended: true },
+  { value: 536870912, name: "improved_righting_force", description: "Ökar kraften som verkar på fordonet när man försöker vända tillbaka det på hjulen", recommended: true },
+  { value: 1073741824, name: "low_speed_wheelies", description: "Tillåter en motorcykel att utföra wheelies vid mycket låga hastigheter", recommended: true },
+  { value: 2147483648, name: "last_available_flag", description: "För närvarande odefinierad", recommended: true },
 ];
 
 interface AnalysisResult {
@@ -193,21 +194,16 @@ const HandlingAnalyzer = () => {
   const [companyType, setCompanyType] = useState<CompanyType>("police");
   const [originalXMLFormats, setOriginalXMLFormats] = useState<Record<string, string>>({});
   const [isPartialInput, setIsPartialInput] = useState(false);
+  const [originalContent, setOriginalContent] = useState("");
+  const [previewXML, setPreviewXML] = useState("");
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   const parseXML = (xmlContent: string) => {
     try {
+      // Save the EXACT original content
+      setOriginalContent(xmlContent);
+      
       const parser = new DOMParser();
-      
-      // Save original XML formats
-      const formats: Record<string, string> = {};
-      const formatRegex = /<(\w+)(\s+value="[^"]*")?\s*\/?>(.*?)<\/\1>?/gs;
-      let match;
-      
-      while ((match = formatRegex.exec(xmlContent)) !== null) {
-        const [fullMatch, tagName] = match;
-        formats[tagName] = fullMatch;
-      }
-      setOriginalXMLFormats(formats);
       
       // Wrap partial XML if needed
       let fullXML = xmlContent.trim();
@@ -685,136 +681,222 @@ const HandlingAnalyzer = () => {
     }
   };
 
-  const fixHandlingValues = () => {
+  const generatePreviewXML = () => {
+    if (!parsedHandlingData || !originalContent) return "";
+
+    let xmlContent = originalContent;
+    
+    Object.keys(parsedHandlingData).forEach(key => {
+      const value = parsedHandlingData[key];
+      if (value === undefined || value === null) return;
+
+      if (typeof value === 'object' && value !== null && 'x' in value) {
+        const vec = value as { x: string; y: string; z: string };
+        const vectorRegex = new RegExp(`<${key}\\s+x="[^"]*"\\s+y="[^"]*"\\s+z="[^"]*"\\s*/>`, 'g');
+        xmlContent = xmlContent.replace(vectorRegex, `<${key} x="${vec.x}" y="${vec.y}" z="${vec.z}" />`);
+      } else {
+        const valueAttrRegex = new RegExp(`<${key}\\s+value="[^"]*"\\s*/>`, 'g');
+        const textContentRegex = new RegExp(`<${key}>.*?</${key}>`, 'g');
+        
+        if (xmlContent.match(valueAttrRegex)) {
+          xmlContent = xmlContent.replace(valueAttrRegex, `<${key} value="${value}" />`);
+        }
+        if (xmlContent.match(textContentRegex)) {
+          xmlContent = xmlContent.replace(textContentRegex, `<${key}>${value}</${key}>`);
+        }
+      }
+    });
+
+    return xmlContent;
+  };
+
+  const updatePreview = () => {
+    const preview = generatePreviewXML();
+    setPreviewXML(preview);
+  };
+
+  const copyHandlingMeta = () => {
+    if (!parsedHandlingData || !originalContent) {
+      toast.error("Ingen handling data att kopiera");
+      return;
+    }
+
+    const xmlContent = generatePreviewXML();
+    navigator.clipboard.writeText(xmlContent);
+    toast.success("Handling data kopierad!");
+  };
+
+  const autoFixHandling = () => {
     if (!parsedHandlingData) {
       toast.error("Ingen handling data att fixa");
       return;
     }
 
-    const fixed = { ...parsedHandlingData };
-    let changesCount = 0;
-
-    // Determine vehicle type based on current values
-    let targetType: 'import' | 'patent' | 'företag' = 'import';
+    const guidelines = vehicleGuidelines[vehicleType];
+    const updatedData = { ...parsedHandlingData };
     
-    // Check if it's closer to patent values
-    const driveForce = parseFloat(fixed.fInitialDriveForce || '0');
-    if (driveForce > 0.31) {
-      targetType = 'patent';
-    }
-
-    // Define guidelines based on target type
-    const guidelines = {
-      import: {
-        fInitialDriveForce: '0.26',
-        fInitialDriveMaxFlatVel: '220.0',
-        fBrakeForce: '1.8',
-        fCollisionDamageMult: '0.4',
-        fWeaponDamageMult: '0.0033',
-        fDeformationDamageMult: '0.3',
-        fEngineDamageMult: '0.4'
-      },
-      patent: {
-        fInitialDriveForce: '0.37',
-        fInitialDriveMaxFlatVel: '240.0',
-        fBrakeForce: '2.5',
-        fCollisionDamageMult: '0.3',
-        fWeaponDamageMult: '0.0033',
-        fDeformationDamageMult: '0.2',
-        fEngineDamageMult: '0.3'
-      },
-      företag: {
-        fInitialDriveForce: '0.26',
-        fInitialDriveMaxFlatVel: '220.0',
-        fBrakeForce: '1.8',
-        fCollisionDamageMult: '0.4',
-        fWeaponDamageMult: '0.0033',
-        fDeformationDamageMult: '0.3',
-        fEngineDamageMult: '0.4'
-      }
-    };
-
-    const guide = guidelines[targetType];
-
-    // Fix values that are outside guidelines
-    Object.keys(guide).forEach((key) => {
-      const currentVal = parseFloat(fixed[key] || '0');
-      const guideVal = parseFloat(guide[key as keyof typeof guide]);
-      
-      // Check if value differs significantly from guideline
-      if (Math.abs(currentVal - guideVal) > 0.01) {
-        fixed[key] = guide[key as keyof typeof guide];
-        changesCount++;
+    // Auto-fix all guideline values
+    Object.keys(guidelines).forEach(key => {
+      const guideline = guidelines[key as keyof VehicleGuideline];
+      if (typeof guideline === 'number') {
+        updatedData[key] = guideline.toString();
+      } else if (typeof guideline === 'object' && 'min' in guideline) {
+        // Use the middle value for range guidelines
+        const middleValue = (guideline.min + guideline.max) / 2;
+        updatedData[key] = middleValue.toString();
       }
     });
 
-    // Check fMass bounds (500-10000)
-    const mass = parseFloat(fixed.fMass || '0');
-    if (mass < 500) {
-      fixed.fMass = '800.0';
-      changesCount++;
-    } else if (mass > 10000) {
-      fixed.fMass = '4000.0';
-      changesCount++;
-    }
-
-    // Check fBrakeForce bounds (0.5-3.0)
-    const brakeForce = parseFloat(fixed.fBrakeForce || '0');
-    if (brakeForce < 0.5) {
-      fixed.fBrakeForce = '0.5';
-      changesCount++;
-    } else if (brakeForce > 3.0) {
-      fixed.fBrakeForce = '3.0';
-      changesCount++;
-    }
-
-    if (changesCount > 0) {
-      setParsedHandlingData(fixed);
-      toast.success(`${changesCount} värde(n) fixade enligt riktlinjer (${targetType})`);
-    } else {
-      toast.success("Den här funktionen är under utveckling");
-    }
+    setParsedHandlingData(updatedData);
+    toast.success("Alla värden fixade automatiskt!");
   };
 
-  const copyHandlingMeta = () => {
-    if (!parsedHandlingData) {
-      toast.error("Ingen handling data att kopiera");
-      return;
-    }
+  // Live update grade when parsedHandlingData changes
+  useEffect(() => {
+    if (parsedHandlingData && metaContent) {
+      // Recalculate analysis
+      const guidelines = vehicleGuidelines[vehicleType];
+      const issues: { severity: "error" | "warning" | "info"; message: string }[] = [];
+      let score: "A" | "B" | "C" | "D" | "F" = "A";
 
-    let xmlContent = '';
-    
-    // If input was partial, output partial too
-    if (isPartialInput) {
-      // Build only handling data without wrapper
-      xmlContent = buildHandlingDataContent();
-    } else {
-      // Build full XML with wrapper
-      xmlContent = '<?xml version="1.0" encoding="UTF-8"?>\n\n';
-      xmlContent += '<CHandlingDataMgr>\n';
-      xmlContent += '  <HandlingData>\n';
-      xmlContent += '    <Item type="CHandlingData">\n';
-      xmlContent += `\t\t\t<handlingName>${parsedHandlingData.handlingName || 'VEHICLE'}</handlingName>\n`;
-      xmlContent += buildHandlingDataContent();
+      const checkValue = (
+        value: number,
+        expected: number | { min: number; max: number },
+        fieldName: string,
+        displayName: string,
+        checkDirection: "both" | "over" | "under" = "both"
+      ) => {
+        if (typeof expected === "number") {
+          const diff = value - expected;
+          const isOutOfBounds = Math.abs(diff) > 0.01;
+          
+          let shouldWarn = false;
+          if (checkDirection === "over" && diff > 0.01) {
+            shouldWarn = true;
+          } else if (checkDirection === "under" && diff < -0.01) {
+            shouldWarn = true;
+          } else if (checkDirection === "both" && isOutOfBounds) {
+            shouldWarn = true;
+          }
+          
+          if (shouldWarn) {
+            issues.push({
+              severity: "error",
+              message: `${displayName} är ${value}, ska vara ${expected} för ${vehicleType}`
+            });
+            if (score === "A") score = "C";
+          } else if (!isOutOfBounds) {
+            issues.push({
+              severity: "info",
+              message: `${displayName} är korrekt (${value})`
+            });
+          }
+        } else {
+          const tooLow = value < expected.min;
+          const tooHigh = value > expected.max;
+          
+          let shouldWarn = false;
+          if (checkDirection === "over" && tooHigh) {
+            shouldWarn = true;
+          } else if (checkDirection === "under" && tooLow) {
+            shouldWarn = true;
+          } else if (checkDirection === "both" && (tooLow || tooHigh)) {
+            shouldWarn = true;
+          }
+          
+          if (shouldWarn) {
+            issues.push({
+              severity: "error",
+              message: `${displayName} är ${value}, ska vara mellan ${expected.min}-${expected.max} för ${vehicleType}`
+            });
+            if (score === "A") score = "C";
+          } else if (!tooLow && !tooHigh) {
+            issues.push({
+              severity: "info",
+              message: `${displayName} är inom rätt intervall (${value})`
+            });
+          }
+        }
+      };
+
+      const currentData = parsedHandlingData;
       
-      // Add SubHandlingData if present
-      if (parsedHandlingData.SubHandlingData) {
-        xmlContent += '\t\t\t<SubHandlingData>\n';
-        xmlContent += '\t\t\t\t<Item type="NULL" />\n';
-        xmlContent += '\t\t\t\t<Item type="NULL" />\n';
-        xmlContent += '\t\t\t\t<Item type="NULL" />\n';
-        xmlContent += '\t\t\t</SubHandlingData>\n';
+      if (currentData.fInitialDragCoeff) {
+        checkValue(parseFloat(currentData.fInitialDragCoeff), guidelines.fInitialDragCoeff, "fInitialDragCoeff", "Drag Coefficient");
+      }
+      if (currentData.fDownforceModifier) {
+        checkValue(parseFloat(currentData.fDownforceModifier), guidelines.fDownforceModifier, "fDownforceModifier", "Downforce Modifier");
+      }
+      if (currentData.nInitialDriveGears) {
+        checkValue(parseInt(currentData.nInitialDriveGears), guidelines.nInitialDriveGears, "nInitialDriveGears", "Drive Gears");
+      }
+      if (currentData.fInitialDriveForce) {
+        checkValue(parseFloat(currentData.fInitialDriveForce), guidelines.fInitialDriveForce, "fInitialDriveForce", "Drive Force");
+      }
+      if (currentData.fDriveInertia) {
+        checkValue(parseFloat(currentData.fDriveInertia), guidelines.fDriveInertia, "fDriveInertia", "Drive Inertia");
+      }
+      if (currentData.fClutchChangeRateScaleUpShift) {
+        checkValue(parseFloat(currentData.fClutchChangeRateScaleUpShift), guidelines.fClutchChangeRateScaleUpShift, "fClutchChangeRateScaleUpShift", "Clutch Up Shift");
+      }
+      if (currentData.fClutchChangeRateScaleDownShift) {
+        checkValue(parseFloat(currentData.fClutchChangeRateScaleDownShift), guidelines.fClutchChangeRateScaleDownShift, "fClutchChangeRateScaleDownShift", "Clutch Down Shift");
+      }
+      if (currentData.fInitialDriveMaxFlatVel) {
+        checkValue(parseFloat(currentData.fInitialDriveMaxFlatVel), guidelines.fInitialDriveMaxFlatVel, "fInitialDriveMaxFlatVel", "Max Speed");
+      }
+      if (currentData.fBrakeForce) {
+        checkValue(parseFloat(currentData.fBrakeForce), guidelines.fBrakeForce, "fBrakeForce", "Brake Force", "over");
+      }
+      if (currentData.fHandBrakeForce) {
+        checkValue(parseFloat(currentData.fHandBrakeForce), guidelines.fHandBrakeForce, "fHandBrakeForce", "Handbrake Force");
+      }
+      if (currentData.fSteeringLock) {
+        checkValue(parseFloat(currentData.fSteeringLock), guidelines.fSteeringLock, "fSteeringLock", "Steering Lock");
+      }
+      if (currentData.fTractionCurveMax) {
+        checkValue(parseFloat(currentData.fTractionCurveMax), guidelines.fTractionCurveMax, "fTractionCurveMax", "Traction Max");
+      }
+      if (currentData.fTractionCurveMin) {
+        checkValue(parseFloat(currentData.fTractionCurveMin), guidelines.fTractionCurveMin, "fTractionCurveMin", "Traction Min");
+      }
+      if (currentData.fTractionCurveLateral) {
+        checkValue(parseFloat(currentData.fTractionCurveLateral), guidelines.fTractionCurveLateral, "fTractionCurveLateral", "Traction Lateral");
+      }
+      if (currentData.fCamberStiffnesss) {
+        checkValue(parseFloat(currentData.fCamberStiffnesss), guidelines.fCamberStiffnesss, "fCamberStiffnesss", "Camber Stiffness");
+      }
+      if (currentData.fSuspensionReboundDamp) {
+        checkValue(parseFloat(currentData.fSuspensionReboundDamp), guidelines.fSuspensionReboundDamp, "fSuspensionReboundDamp", "Suspension Rebound");
+      }
+      if (currentData.fCollisionDamageMult) {
+        checkValue(parseFloat(currentData.fCollisionDamageMult), guidelines.fCollisionDamageMult, "fCollisionDamageMult", "Collision Damage", "under");
+      }
+      if (currentData.fWeaponDamageMult) {
+        checkValue(parseFloat(currentData.fWeaponDamageMult), guidelines.fWeaponDamageMult, "fWeaponDamageMult", "Weapon Damage", "under");
+      }
+      if (currentData.fDeformationDamageMult) {
+        checkValue(parseFloat(currentData.fDeformationDamageMult), guidelines.fDeformationDamageMult, "fDeformationDamageMult", "Deformation Damage", "under");
+      }
+      if (currentData.fEngineDamageMult) {
+        checkValue(parseFloat(currentData.fEngineDamageMult), guidelines.fEngineDamageMult, "fEngineDamageMult", "Engine Damage", "under");
+      }
+      if (currentData.fPetrolTankVolume) {
+        checkValue(parseFloat(currentData.fPetrolTankVolume), guidelines.fPetrolTankVolume, "fPetrolTankVolume", "Fuel Tank");
       }
 
-      xmlContent += '    </Item>\n';
-      xmlContent += '  </HandlingData>\n';
-      xmlContent += '</CHandlingDataMgr>';
-    }
+      const errorCount = issues.filter(i => i.severity === "error").length;
+      if (errorCount > 10) score = "F";
+      else if (errorCount > 5) score = "D";
+      else if (errorCount > 2) score = "C";
 
-    // Copy to clipboard
-    navigator.clipboard.writeText(xmlContent);
-    toast.success("Handling data kopierad!");
-  };
+      setResult({
+        score,
+        issues,
+        suggestions: []
+      });
+    }
+  }, [parsedHandlingData, vehicleType]);
 
   const buildHandlingDataContent = () => {
     let content = '';
@@ -863,12 +945,98 @@ const HandlingAnalyzer = () => {
   };
 
   return (
-    <div className="container py-6 md:py-12 px-4 max-w-6xl">
+    <div className="container py-6 md:py-12 max-w-7xl px-4">
       <div className="mb-6 md:mb-8 animate-fade-in">
-        <h1 className="text-2xl md:text-4xl font-bold mb-2 md:mb-4 text-gradient">Handling Analyzer</h1>
-        <p className="text-sm md:text-lg text-muted-foreground">
-          Ladda upp eller klistra in din handling.meta för djupgående analys
-        </p>
+        <div className="flex items-center justify-between">
+          <div>
+            <h1 className="text-2xl md:text-4xl font-bold mb-2 md:mb-4 text-gradient">Handling Analyzer</h1>
+            <p className="text-sm md:text-lg text-muted-foreground">
+              Ladda upp eller klistra in din handling.meta för djupgående analys
+            </p>
+          </div>
+          
+          {/* Mobile Menu */}
+          <Sheet open={mobileMenuOpen} onOpenChange={setMobileMenuOpen}>
+            <SheetTrigger asChild className="md:hidden">
+              <Button variant="outline" size="icon">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="left" className="w-80 overflow-y-auto">
+              <div className="space-y-4 mt-6">
+                <h3 className="font-semibold text-lg">Aktiva Handling Flags ({activeFlags.size})</h3>
+                
+                <div className="space-y-2">
+                  <Label htmlFor="mobile-flag-search">Sök flaggor</Label>
+                  <div className="relative">
+                    <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Input
+                      id="mobile-flag-search"
+                      placeholder="Sök efter flagg..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.target.value)}
+                      className="pl-9"
+                    />
+                  </div>
+                </div>
+
+                <div className="space-y-2 max-h-[60vh] overflow-y-auto pr-2">
+                  {filteredFlags.map((flag) => (
+                    <div
+                      key={flag.value}
+                      className={`p-3 rounded-lg border transition-all ${
+                        activeFlags.has(flag.value)
+                          ? flag.recommended
+                            ? "bg-primary/10 border-primary/30"
+                            : "bg-destructive/10 border-destructive/30"
+                          : "bg-muted/30 border-transparent opacity-50"
+                      }`}
+                    >
+                      <div className="flex items-start gap-2">
+                        <Checkbox
+                          checked={activeFlags.has(flag.value)}
+                          onCheckedChange={() => {
+                            const newFlags = new Set(activeFlags);
+                            if (newFlags.has(flag.value)) {
+                              newFlags.delete(flag.value);
+                            } else {
+                              newFlags.add(flag.value);
+                            }
+                            setActiveFlags(newFlags);
+                            
+                            let total = 0;
+                            newFlags.forEach((f) => total += f);
+                            const newHexValue = total.toString(16).toUpperCase();
+                            setFlagsHexValue(newHexValue);
+                            
+                            if (parsedHandlingData) {
+                              const updatedData = { ...parsedHandlingData, strHandlingFlags: newHexValue };
+                              setParsedHandlingData(updatedData);
+                            }
+                          }}
+                          className="mt-0.5"
+                        />
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-center gap-2 flex-wrap mb-1">
+                            <p className="font-medium text-sm">{flag.name}</p>
+                            {!flag.recommended && activeFlags.has(flag.value) && (
+                              <Badge variant="outline" className="text-destructive border-destructive/30 text-xs">
+                                Orekommenderad
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            {flag.description}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </SheetContent>
+          </Sheet>
+        </div>
       </div>
 
       <div className="grid lg:grid-cols-3 gap-4 md:gap-6">
@@ -941,16 +1109,17 @@ const HandlingAnalyzer = () => {
               />
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
-              <Button onClick={analyzeHandling} disabled={analyzing || !metaContent.trim()} className="flex-1 w-full sm:w-auto">
+            <div className="flex flex-col sm:flex-row gap-2 md:gap-4">
+              <Button onClick={analyzeHandling} disabled={analyzing || !metaContent.trim()} className="flex-1">
                 <FileSearch className="h-4 w-4 mr-2" />
                 {analyzing ? "Analyserar..." : "Analysera"}
               </Button>
               
-              <Button variant="outline" asChild className="w-full sm:w-auto">
+              <Button variant="outline" asChild className="flex-1 sm:flex-initial">
                 <label className="cursor-pointer flex items-center justify-center gap-2">
                   <Upload className="h-4 w-4" />
-                  <span className="whitespace-nowrap">Ladda upp</span>
+                  <span className="hidden sm:inline">Ladda upp</span>
+                  <span className="sm:hidden">Ladda upp</span>
                   <input
                     type="file"
                     accept=".meta,.xml"
@@ -959,15 +1128,36 @@ const HandlingAnalyzer = () => {
                   />
                 </label>
               </Button>
+            </div>
+
+            <div className="flex flex-col sm:flex-row gap-2 md:gap-4">
+              <Button 
+                onClick={autoFixHandling}
+                disabled={!parsedHandlingData}
+                className="flex-1"
+              >
+                <Wand2 className="h-4 w-4 mr-2" />
+                Fixa Automatiskt
+              </Button>
+
+              <Button 
+                variant="outline" 
+                onClick={updatePreview}
+                disabled={!parsedHandlingData}
+                className="flex-1 sm:flex-initial"
+              >
+                <Save className="h-4 w-4 mr-2" />
+                Förhandsgranska
+              </Button>
 
               <Button 
                 variant="outline" 
                 onClick={copyHandlingMeta}
                 disabled={!parsedHandlingData}
-                className="w-full sm:w-auto"
+                className="flex-1 sm:flex-initial"
               >
                 <Copy className="h-4 w-4 mr-2" />
-                <span className="whitespace-nowrap">Kopiera</span>
+                Kopiera
               </Button>
             </div>
 
@@ -993,11 +1183,22 @@ const HandlingAnalyzer = () => {
                 />
               </div>
             )}
+
+            {previewXML && (
+              <div className="space-y-2 pt-4 border-t animate-fade-in">
+                <Label>XML Förhandsvisning</Label>
+                <Textarea
+                  readOnly
+                  value={previewXML}
+                  className="min-h-[200px] font-mono text-xs"
+                />
+              </div>
+            )}
           </CardContent>
         </Card>
 
-        {/* Active Flags Section */}
-        <Card className="shadow-card hover-scale animate-fade-in" style={{ animationDelay: '0.1s' }}>
+        {/* Active Flags Section - Hidden on mobile, shown on desktop */}
+        <Card className="shadow-card hover-scale animate-fade-in hidden md:block" style={{ animationDelay: '0.1s' }}>
           <CardHeader>
             <CardTitle>Aktiva Handling Flags ({activeFlags.size})</CardTitle>
             <CardDescription>
@@ -1058,19 +1259,19 @@ const HandlingAnalyzer = () => {
                       }}
                       className="mt-0.5"
                     />
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-center gap-2 flex-wrap mb-1">
-                          <p className="font-medium text-xs md:text-sm break-words">{flag.name}</p>
-                          {!flag.recommended && activeFlags.has(flag.value) && (
-                            <Badge variant="outline" className="text-destructive border-destructive/30 text-xs shrink-0">
-                              Orekommenderad
-                            </Badge>
-                          )}
-                        </div>
-                        <p className="text-xs text-muted-foreground break-words">
-                          {flag.description}
-                        </p>
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 flex-wrap mb-1">
+                        <p className="font-medium text-sm">{flag.name}</p>
+                        {!flag.recommended && activeFlags.has(flag.value) && (
+                          <Badge variant="outline" className="text-destructive border-destructive/30 text-xs">
+                            Orekommenderad
+                          </Badge>
+                        )}
                       </div>
+                      <p className="text-xs text-muted-foreground line-clamp-2">
+                        {flag.description}
+                      </p>
+                    </div>
                   </div>
                 </div>
               ))}
@@ -1097,17 +1298,17 @@ const HandlingAnalyzer = () => {
           {result ? (
             <div className="space-y-6">
               {/* Score */}
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6">
-                <div className="text-center p-4 md:p-6 bg-muted/30 rounded-lg">
-                  <p className="text-xs md:text-sm text-muted-foreground mb-2">Betyg</p>
-                  <p className={`text-4xl md:text-6xl font-bold ${getScoreColor(result.score)}`}>
+              <div className="grid md:grid-cols-3 gap-6">
+                <div className="text-center p-6 bg-muted/30 rounded-lg">
+                  <p className="text-sm text-muted-foreground mb-2">Betyg</p>
+                  <p className={`text-6xl font-bold ${getScoreColor(result.score)}`}>
                     {result.score}
                   </p>
                 </div>
 
                 {/* Issues Summary */}
                 <div className="space-y-3 md:col-span-2">
-                  <h3 className="font-semibold text-sm md:text-base">Upptäckta Problem</h3>
+                  <h3 className="font-semibold">Upptäckta Problem</h3>
                   <div className="space-y-2 max-h-[200px] overflow-y-auto pr-2">
                     {result.issues.map((issue, idx) => (
                       <div
@@ -1115,11 +1316,11 @@ const HandlingAnalyzer = () => {
                         className="flex gap-3 p-3 rounded-lg bg-muted/30"
                       >
                         {getSeverityIcon(issue.severity)}
-                        <div className="flex-1 min-w-0">
+                        <div className="flex-1">
                           <Badge variant="outline" className="mb-2 text-xs">
                             {issue.severity}
                           </Badge>
-                          <p className="text-xs md:text-sm break-words">{issue.message}</p>
+                          <p className="text-sm">{issue.message}</p>
                         </div>
                       </div>
                     ))}
@@ -1131,18 +1332,7 @@ const HandlingAnalyzer = () => {
               {/* Editable Values Section */}
               {parsedHandlingData && (
                 <div className="pt-6 border-t">
-                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-4">
-                    <h3 className="font-semibold">Hanteringsvärden (Editerbara)</h3>
-                    <Button
-                      onClick={fixHandlingValues}
-                      variant="default"
-                      size="sm"
-                      className="hover-scale w-full sm:w-auto"
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      <span className="whitespace-nowrap">Fixa Enligt Riktlinjer (Inom utveckling)</span>
-                    </Button>
-                  </div>
+                  <h3 className="font-semibold mb-4">Hanteringsvärden (Editerbara)</h3>
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                     {Object.entries(parsedHandlingData).map(([key, value]) => {
                       // Skip vector values, handlingName, and non-editable fields
@@ -1192,7 +1382,7 @@ const HandlingAnalyzer = () => {
                       
                       return (
                         <div key={key} className="space-y-2">
-                          <Label htmlFor={`edit-${key}`} className="text-xs font-mono break-words">
+                          <Label htmlFor={`edit-${key}`} className="text-xs font-mono">
                             {key}
                           </Label>
                           <Input
@@ -1203,10 +1393,10 @@ const HandlingAnalyzer = () => {
                               const updatedData = { ...parsedHandlingData, [key]: newValue };
                               setParsedHandlingData(updatedData);
                             }}
-                            className={`font-mono text-xs md:text-sm ${isOutOfBounds ? 'border-destructive focus-visible:ring-destructive' : ''}`}
+                            className={`font-mono text-sm ${isOutOfBounds ? 'border-destructive focus-visible:ring-destructive' : ''}`}
                           />
                           {isOutOfBounds && (
-                            <p className="text-xs text-destructive mt-1 break-words">{errorMessage}</p>
+                            <p className="text-xs text-destructive mt-1">{errorMessage}</p>
                           )}
                         </div>
                       );
