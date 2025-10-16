@@ -26,11 +26,11 @@ const App = () => (
             <Header />
             <main className="flex-1">
               <Routes>
-                <Route path="/" element={<Home />} />
-                <Route path="/flags" element={<HandlingFlags />} />
-                <Route path="/handling" element={<HandlingAnalyzer />} />
-                <Route path="/riktlinjer" element={<Guidelines />} />
-                <Route path="/vapen" element={<WeaponFlags />} />
+                <Route path="fivem-tools/hem" element={<Home />} />
+                <Route path="fivem-tools/flags" element={<HandlingFlags />} />
+                <Route path="fivem-tools/handling" element={<HandlingAnalyzer />} />
+                <Route path="fivem-tools/riktlinjer" element={<Guidelines />} />
+                <Route path="fivem-tools/vapen" element={<WeaponFlags />} />
                 {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
                 <Route path="*" element={<NotFound />} />
               </Routes>
