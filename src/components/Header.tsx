@@ -1,11 +1,14 @@
 import { Link, useLocation } from "react-router-dom";
 import { Button } from "./ui/button";
-import { Settings, Flag, FileSearch, BookOpen, Sword, Moon, Sun } from "lucide-react";
+import { Settings, Flag, FileSearch, BookOpen, Sword, Moon, Sun, Menu } from "lucide-react";
 import { useTheme } from "@/contexts/ThemeContext";
+import { Sheet, SheetContent, SheetTrigger } from "./ui/sheet";
+import { useState } from "react";
 
 export const Header = () => {
   const location = useLocation();
   const { theme, toggleTheme } = useTheme();
+  const [open, setOpen] = useState(false);
   
   const isActive = (path: string) => location.pathname === path;
   
@@ -27,7 +30,8 @@ export const Header = () => {
           <span className="text-xl font-bold text-gradient">FiveM Tools</span>
         </Link>
         
-        <div className="flex items-center gap-1">
+        {/* Desktop menu */}
+        <div className="hidden md:flex items-center gap-1">
           {navLinks.map((link) => {
             const Icon = link.icon;
             return (
@@ -40,7 +44,7 @@ export const Header = () => {
               >
                 <Link to={link.path} className="flex items-center gap-2">
                   <Icon className="h-4 w-4" />
-                  <span className="hidden md:inline">{link.label}</span>
+                  <span>{link.label}</span>
                 </Link>
               </Button>
             );
@@ -58,6 +62,52 @@ export const Header = () => {
               <Sun className="h-4 w-4" />
             )}
           </Button>
+        </div>
+
+        {/* Mobile menu */}
+        <div className="flex md:hidden items-center gap-2">
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={toggleTheme}
+            className="transition-all duration-300 hover:scale-105"
+          >
+            {theme === "light" ? (
+              <Moon className="h-4 w-4" />
+            ) : (
+              <Sun className="h-4 w-4" />
+            )}
+          </Button>
+          
+          <Sheet open={open} onOpenChange={setOpen}>
+            <SheetTrigger asChild>
+              <Button variant="ghost" size="sm" className="transition-all duration-300 hover:scale-105">
+                <Menu className="h-5 w-5" />
+              </Button>
+            </SheetTrigger>
+            <SheetContent side="right" className="w-64">
+              <nav className="flex flex-col gap-2 mt-8">
+                {navLinks.map((link) => {
+                  const Icon = link.icon;
+                  return (
+                    <Button
+                      key={link.path}
+                      asChild
+                      variant={isActive(link.path) ? "default" : "ghost"}
+                      size="default"
+                      className="justify-start w-full"
+                      onClick={() => setOpen(false)}
+                    >
+                      <Link to={link.path} className="flex items-center gap-3">
+                        <Icon className="h-5 w-5" />
+                        <span>{link.label}</span>
+                      </Link>
+                    </Button>
+                  );
+                })}
+              </nav>
+            </SheetContent>
+          </Sheet>
         </div>
       </nav>
     </header>
