@@ -625,18 +625,24 @@ const HandlingAnalyzer = () => {
     }
   };
 
-  const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      const reader = new FileReader();
-      reader.onload = (event) => {
-        const content = event.target?.result as string;
-        setMetaContent(content);
-        toast.success("Fil uppladdad!");
-      };
-      reader.readAsText(file);
-    }
-  };
+const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const file = e.target.files?.[0];
+  if (file) {
+    const reader = new FileReader();
+    reader.onload = (event) => {
+      const content = event.target?.result as string;
+      setMetaContent(content);
+      try {
+        parseXML(content); // ✅ Lägg till denna rad
+      } catch (error) {
+        console.error("Parse error vid uppladdning:", error);
+        toast.error("Kunde inte tolka filens innehåll");
+      }
+      toast.success("Fil uppladdad!");
+    };
+    reader.readAsText(file);
+  }
+};
 
   const hasUnrecommendedFlags = () => {
     return Array.from(activeFlags).some(
