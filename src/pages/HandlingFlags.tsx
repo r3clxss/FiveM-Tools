@@ -180,7 +180,7 @@ const HandlingFlags = () => {
                   </div>
                 </div>
                 <div className="space-y-2">
-                  <Label className="text-xs text-muted-foreground">Hexadecimalt</Label>
+                  <Label className="text-xs text-muted-foreground">Hexadecimalt (Handling.meta värdet)</Label>
                   <div className="flex gap-2">
                     <Input
                       readOnly
