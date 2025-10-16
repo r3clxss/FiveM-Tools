@@ -9,7 +9,6 @@
     "preview": "vite preview",
     "deploy": "npm run build && cp 404.html dist/ && gh-pages -d dist"
   },
-
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
     "@radix-ui/react-accordion": "^1.2.11",
